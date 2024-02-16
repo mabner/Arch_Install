@@ -96,6 +96,9 @@ echo root:$ROOT_PASSWORD | chpasswd
 useradd -m -G wheel,storage,power,audio -s /bin/bash $USERNAME
 echo $USERNAME:$USER_PASSWORD | chpasswd
 
+# Enable sudo for wheel users
+sed -i 's/^# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /etc/sudoers
+
 #CHROOT
 #######################################################################
 
