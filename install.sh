@@ -32,6 +32,8 @@ reflector --country Brazil --latest 10 --protocol http,https --sort rate --save 
 # Pacstrap the base and base-devel with usual dependencies
 pacstrap -K /mnt base base-devel linux linux-firmware nano git man-db texinfo networkmanager wpa_supplicant bash-completion grub os-probe efibootmgr
 
+# fstab
+genfstab -U /mnt >> /mnt/etc/fstab
 
 
 
