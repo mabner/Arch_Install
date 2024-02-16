@@ -18,15 +18,13 @@ read USER_PASSWORD
 
 # Setting the filesystem
 echo -e "\nFormating partitions\n"
-
 mkfs.ext4 "${ROOT}" -L "Arch"
 mkswap "${SWAP}" -L "Swap"
-swapon "${SWAP}"
 
 # Mounting targets
-mount "${ROOT} /mnt"
-mkdir /mnt/boot
-mount "${EFI} /mnt/boot"
+mount "${ROOT}" /mnt
+mount --mkdir "${EFI}" /mnt/boot
+swapon "${SWAP}"
 
 # Mirror update
 reflector --country Brazil --latest 10 --protocol http,https --sort rate --save /etc/pacman.d/mirrorlist
