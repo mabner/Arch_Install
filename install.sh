@@ -51,6 +51,9 @@ locale-gen
 echo "LANG=en_US.UTF-8" > /etc/locale.conf
 echo "KEYMAP=uk" > /etc/vconsole.conf
 
+# Hostname
+echo "${HOSTNAME}" > /etc/hostname
+
 #CHROOT
 
 # Change root
