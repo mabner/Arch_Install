@@ -43,9 +43,9 @@ reflector --country Brazil --latest 10 --protocol http,https --sort rate --save 
 # Pacstrap the base and base-devel with usual dependencies
 if [[ $WIFI_OPT == '1' ]]
 then
-  pacstrap -K /mnt base base-devel linux linux-firmware nano git man-db texinfo networkmanager wpa_supplicant bash-completion grub os-probe efibootmgr
+  pacstrap -K /mnt base base-devel linux linux-firmware nano git man-db texinfo networkmanager wpa_supplicant bash-completion grub os-prober efibootmgr
 else
-  pacstrap -K /mnt base base-devel linux linux-firmware nano git man-db texinfo networkmanager bash-completion grub os-probe efibootmgr
+  pacstrap -K /mnt base base-devel linux linux-firmware nano git man-db texinfo networkmanager bash-completion grub os-prober efibootmgr
 fi
 
 # fstab
