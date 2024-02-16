@@ -28,4 +28,9 @@ mount "${ROOT} /mnt"
 mkdir /mnt/boot
 mount "${EFI} /mnt/boot"
 
+# Mirror update
+reflector --country Brazil --latest 10 --protocol http,https --sort rate --save /etc/pacman.d/mirrorlist
+
+
+
 
