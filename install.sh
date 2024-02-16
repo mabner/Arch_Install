@@ -56,7 +56,7 @@ systemctl stop iwd.service
 
 # Script part to run inside chroot
 #######################################################################
-#cat <<CHROOT > /mnt/chroot.sh
+cat <<CHROOT > /mnt/chroot.sh
 
 # Sets the timezone
 ln -sf /usr/share/zoneinfo/America/Sao_Paulo /etc/localtime
@@ -99,7 +99,17 @@ echo $USERNAME:$USER_PASSWORD | chpasswd
 # Enable sudo for wheel users
 sed -i 's/^# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /etc/sudoers
 
-#CHROOT
+# GRUB install
+## Install GRUB
+grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=Arch
+
+## Enables GRUB os-prober
+sed -i 's/^#GRUB_DISABLE_OS_PROBER=false/GRUB_DISABLE_OS_PROBER=false/' /etc/default/grub
+
+## Generates the GRUB config
+grub-mkconfig -o /boot/grub/grub.cfg
+
+CHROOT
 #######################################################################
 
 # Change root
