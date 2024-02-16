@@ -55,6 +55,7 @@ genfstab -U /mnt >> /mnt/etc/fstab
 systemctl stop iwd.service
 
 # Script part to run inside chroot
+#######################################################################
 #cat <<CHROOT > /mnt/chroot.sh
 
 # Sets the timezone
@@ -71,7 +72,7 @@ echo "LANG=en_US.UTF-8" > /etc/locale.conf
 echo "KEYMAP=uk" > /etc/vconsole.conf
 
 # Hostname
-echo "${HOST}" > /etc/hostname
+echo "$HOST" > /etc/hostname
 cat <<EOF > /etc/hosts
 127.0.0.1	localhost
 ::1			localhost
@@ -83,12 +84,20 @@ systemctl enable NetworkManager.service
 systemctl start NetworkManager.service
 if [[ $WIFI_OPT == '1' ]]
 then
-  nmcli device wifi connect "${SSID}" password "${WIFI_PASS}"
+  nmcli device wifi connect "$SSID" password "$WIFI_PASS"
 else
   echo "No Wifi to set-up"
 fi
 
+# Root password
+echo root:$ROOT_PASSWORD | chpasswd
+
+# Adding the normal user with sudo abilities
+useradd -m -G wheel,storage,power,audio -s /bin/bash $USERNAME
+echo $USERNAME:$USER_PASSWORD | chpasswd
+
 #CHROOT
+#######################################################################
 
 # Change root
 arch-chroot /mnt sh chroot.sh
