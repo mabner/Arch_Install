@@ -35,7 +35,10 @@ pacstrap -K /mnt base base-devel linux linux-firmware nano git man-db texinfo ne
 # fstab
 genfstab -U /mnt >> /mnt/etc/fstab
 
+# Script part to run inside chroot
+cat <<CHROOT > /mnt/chroot.sh
 
+CHROOT
 
-
-
+# Change root
+arch-chroot /mnt sh chroot.sh
