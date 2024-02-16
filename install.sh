@@ -36,9 +36,22 @@ pacstrap -K /mnt base base-devel linux linux-firmware nano git man-db texinfo ne
 genfstab -U /mnt >> /mnt/etc/fstab
 
 # Script part to run inside chroot
-cat <<CHROOT > /mnt/chroot.sh
+#cat <<CHROOT > /mnt/chroot.sh
 
-CHROOT
+# Sets the timezone
+ln -sf /usr/share/zoneinfo/America/Sao_Paulo /etc/localtime
+
+# Generates /etc/adjtime
+hwclock --systohc
+
+# Setting the locale
+echo "en_GB.UTF-8 UTF-8" > /ect/locale.gen
+echo "pt_BR.UTF-8 UTF-8" >> /ect/locale.gen
+locale-gen
+echo "LANG=en_US.UTF-8" > /etc/locale.conf
+echo "KEYMAP=uk" > /etc/vconsole.conf
+
+#CHROOT
 
 # Change root
 arch-chroot /mnt sh chroot.sh
