@@ -73,8 +73,8 @@ hwclock --systohc
 read -t 6
 
 # Setting the locale
-echo "en_GB.UTF-8 UTF-8" > /ect/locale.gen
-echo "pt_BR.UTF-8 UTF-8" >> /ect/locale.gen
+sed -i 's/^#en_GB.UTF-8 UTF-8/en_GB.UTF-8 UTF-8/' /etc/locale.gen
+sed -i 's/^#pt_BR.UTF-8 UTF-8/pt_BR.UTF-8 UTF-8/' /etc/locale.gen
 read -t 6
 
 cat /etc/locale.gen
