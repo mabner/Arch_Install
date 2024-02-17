@@ -1,10 +1,8 @@
 #!/usr/bin/env bash
 
-function read -t 6(){
-  read -t 6
-}
-
-# Input parameters
+echo "----------------"
+echo "Input parameters"
+echo "----------------"
 echo "Enter the patch to the EFI partition: "
 read EFI
 echo "Enter the path to the ROOT partition: "
@@ -31,23 +29,31 @@ else
   echo "No Wifi to set-up"
 fi
 
-# Setting the filesystem
+echo "----------------------"
+echo "Setting the filesystem"
+echo "----------------------"
 echo -e "\nFormating partitions\n"
 mkfs.ext4 "${ROOT}" -L "Arch"
 mkswap "${SWAP}" -L "Swap"
 read -t 6
 
-# Mounting targets
+echo "----------------"
+echo "Mounting targets"
+echo "----------------"
 mount "${ROOT}" /mnt
 mount --mkdir "${EFI}" /mnt/boot
 swapon "${SWAP}"
 read -t 6
 
-# Mirror update
+echo "-------------"
+echo "Mirror update"
+echo "-------------"
 reflector --country Brazil --latest 10 --protocol http,https --sort rate --save /etc/pacman.d/mirrorlist
 read -t 6
 
-# Pacstrap the base and base-devel with usual dependencies
+echo "--------------------------------------------------------"
+echo "Pacstrap the base and base-devel with usual dependencies"
+echo "--------------------------------------------------------"
 if [[ $WIFI_OPT == '1' ]]
 then
   pacstrap -K /mnt base base-devel linux linux-firmware nano git man-db texinfo networkmanager wpa_supplicant bash-completion grub os-prober efibootmgr
@@ -56,23 +62,30 @@ else
 fi
 read -t 6
 
-# fstab
+echo "----------------"
+echo "Generating fstab"
+echo "----------------"
 genfstab -U /mnt >> /mnt/etc/fstab
 read -t 6
 
 # Script part to run inside chroot
 #######################################################################
-#cat <<CHROOT > /mnt/chroot.sh
-
-# Sets the timezone
+cat <<CHROOT > /mnt/chroot.sh
+echo "-----------------"
+echo "Sets the timezone"
+echo "-----------------"
 ln -sf /usr/share/zoneinfo/America/Sao_Paulo /etc/localtime
 read -t 6
 
-# Generates /etc/adjtime
+echo "----------------------"
+echo "Generates /etc/adjtime"
+echo "----------------------"
 hwclock --systohc
 read -t 6
 
-# Setting the locale
+echo "------------------"
+echo "Setting the locale"
+echo "------------------"
 sed -i 's/^#en_GB.UTF-8 UTF-8/en_GB.UTF-8 UTF-8/' /etc/locale.gen
 sed -i 's/^#pt_BR.UTF-8 UTF-8/pt_BR.UTF-8 UTF-8/' /etc/locale.gen
 read -t 6
@@ -87,30 +100,41 @@ echo "LANG=en_GB.UTF-8" > /etc/locale.conf
 echo "KEYMAP=uk" > /etc/vconsole.conf
 read -t 6
 
-# Hostname
+echo "--------"
+echo "Hostname"
+echo "--------"
 echo "$HOST" > /etc/hostname
 
-# Config colours, simultaneous downloads and multilib in Pacman
+echo "-------------------------------------------------------------"
+echo "Config colours, simultaneous downloads and multilib in Pacman"
+echo "-------------------------------------------------------------"
 sed -i 's/^#Color/Color/' /etc/pacman.conf
 sed -i 's/^#ParallelDownloads = 5/ParallelDownloads = 4/' /etc/pacman.conf
 sed -i 's/^#[multilib]/[multilib]/' /etc/pacman.conf
 sed -i 's/^#Include = /etc/pacman.d/mirrorlist/Include = /etc/pacman.d/mirrorlist/' /etc/pacman.conf
 
-
-# Root password
+echo "-------------"
+echo "Root password"
+echo "-------------"
 echo root:$ROOT_PASSWORD | chpasswd
 read -t 6
 
-# Adding the normal user with sudo abilities
+echo "------------------------------------------"
+echo "Adding the normal user with sudo abilities"
+echo "------------------------------------------"
 useradd -m -G wheel,storage,power,audio -s /bin/bash $USERNAME
 echo $USERNAME:$USER_PASSWORD | chpasswd
 read -t 6
 
-# Enable sudo for wheel users
+echo "---------------------------"
+echo "Enable sudo for wheel users"
+echo "---------------------------"
 sed -i 's/^# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /etc/sudoers
 read -t 6
 
-# GRUB install
+echo "------------"
+echo "GRUB install"
+echo "------------"
 ## Install GRUB
 grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=Arch
 read -t 6
@@ -126,11 +150,11 @@ CHROOT
 #######################################################################
 
 # Script to run after install to enable NetworkManager and set-up Wifi
-#cat <<POST_INSTALL > /mnt/post_install.sh
-
+cat <<POST_INSTALL > /mnt/post_install.sh
 rm /chroot.sh
-
-# Enable Network Manager amd set-up Wifi
+echo "--------------------------------------"
+echo "Enable Network Manager amd set-up Wifi"
+echo "--------------------------------------"
 if [[ $WIFI_OPT == '1' ]]
 then
   systemctl enable NetworkManager.service
@@ -140,7 +164,9 @@ else
   echo "No Wifi to set-up"
 fi
 
-#POST_INSTALL
+rm /post_install.sh
+read -t 6
+POST_INSTALL
 
 # Change root
 arch-chroot /mnt sh chroot.sh
