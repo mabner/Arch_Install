@@ -107,8 +107,7 @@ echo "Config colours, simultaneous downloads and multilib in Pacman"
 echo "-------------------------------------------------------------"
 sed -i 's/^#Color/Color/' /etc/pacman.conf
 sed -i 's/^#ParallelDownloads = 5/ParallelDownloads = 4/' /etc/pacman.conf
-sed -i 's/^#[multilib]/[multilib]/' /etc/pacman.conf
-sed -i 's/^#Include = /etc/pacman.d/mirrorlist/Include = /etc/pacman.d/mirrorlist/' /etc/pacman.conf
+sed -i "/\[multilib\]/,/Include/"'s/^#//' /etc/pacman.conf
 
 echo "-------------"
 echo "Root password"
