@@ -90,9 +90,6 @@ sed -i 's/^#en_GB.UTF-8 UTF-8/en_GB.UTF-8 UTF-8/' /etc/locale.gen
 sed -i 's/^#pt_BR.UTF-8 UTF-8/pt_BR.UTF-8 UTF-8/' /etc/locale.gen
 read -t 6
 
-cat /etc/locale.gen
-read -t 6
-
 locale-gen
 read -t 6
 
@@ -159,6 +156,7 @@ if [[ $WIFI_OPT == '1' ]]
 then
   systemctl enable NetworkManager.service
   systemctl start NetworkManager.service
+  nmcli device wifi
   nmcli device wifi connect "$SSID" password "$WIFI_PASS"
 else
   echo "No Wifi to set-up"
