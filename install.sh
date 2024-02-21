@@ -155,6 +155,7 @@ if [[ $WIFI_OPT == '1' ]]
 then
   systemctl enable NetworkManager.service
   systemctl start NetworkManager.service
+  read -t 10
   nmcli device wifi
   nmcli device wifi connect "$SSID" password "$WIFI_PASS"
 else
