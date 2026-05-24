@@ -175,10 +175,9 @@ editor no
 LOADER
 
 cat > /boot/loader/entries/arch.conf <<ENTRY
-
 title Arch Linux
 linux /vmlinuz-linux
-initrd /intel-ucode.img
+#initrd /intel-ucode.img
 initrd /initramfs-linux.img
 options root=UUID=$ROOT_UUID rootflags=subvol=@ rw
 
