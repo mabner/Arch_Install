@@ -1,12 +1,27 @@
 #!/usr/bin/env bash
+set -e
+
+pause_install() {
+  read -t 6 || true
+}
 
 echo "----------------"
 echo "Input parameters"
 echo "----------------"
 echo "Enter the path to the EFI partition: "
 read EFI
+if [[ ! -b "$EFI" ]]; then
+  echo "Error: EFI partition '$EFI' is not a valid block device."
+  exit 1
+fi
+
 echo "Enter the path to the ROOT partition: "
 read ROOT
+if [[ ! -b "$ROOT" ]]; then
+  echo "Error: ROOT partition '$ROOT' is not a valid block device."
+  exit 1
+fi
+
 echo "Enter the ROOT password"
 read ROOT_PASSWORD
 echo "Enter the HOSTNAME: "
@@ -32,7 +47,7 @@ echo "Setting the filesystem"
 echo "----------------------"
 echo -e "\nFormating partitions\n"
 mkfs.btrfs -f "${ROOT}" -L "arch"
-read -t 6
+pause_install
 
 echo "----------------"
 echo "Mounting targets"
@@ -45,9 +60,9 @@ echo "-------------------"
 btrfs subvolume create /mnt/@
 btrfs subvolume create /mnt/@home
 btrfs subvolume create /mnt/@snapshots
-read -t 6
+pause_install
 umount /mnt
-read -t 6
+pause_install
 
 echo "------------------"
 echo "Mouting subvolumes"
@@ -57,13 +72,13 @@ mkdir -p /mnt/{boot,home,.snapshots}
 mount -o compress=zstd,noatime,subvol=@home "${ROOT}" /mnt/home
 mount -o compress=zstd,noatime,subvol=@snapshots "${ROOT}" /mnt/.snapshots
 mount "${EFI}" /mnt/boot
-read -t 6
+pause_install
 
 echo "-------------"
 echo "Mirror update"
 echo "-------------"
 reflector --country Brazil --latest 10 --protocol http,https --sort rate --save /etc/pacman.d/mirrorlist
-read -t 6
+pause_install
 
 echo "--------------------------------------------------------"
 echo "Pacstrap the base and base-devel with usual dependencies"
@@ -82,13 +97,15 @@ PACKAGES=(
 [[ $WIFI_OPT == '1' ]] && PACKAGES+=(wpa_supplicant)
 
 pacstrap -K /mnt "${PACKAGES[@]}"
-read -t 6
+pause_install
 
 echo "----------------"
 echo "Generating fstab"
 echo "----------------"
 genfstab -U /mnt >> /mnt/etc/fstab
-read -t 6
+pause_install
+
+ROOT_UUID=$(blkid -s UUID -o value "$ROOT")
 
 # Script part to run inside chroot
 #######################################################################
@@ -96,31 +113,35 @@ arch-chroot /mnt /bin/bash <<CHROOT
 
 set -e
 
+pause_install() {
+  read -t 6 || true
+}
+
 echo "-----------------"
 echo "Sets the timezone"
 echo "-----------------"
 ln -sf /usr/share/zoneinfo/America/Sao_Paulo /etc/localtime
-read -t 6
+pause_install
 
 echo "----------------------"
 echo "Generates /etc/adjtime"
 echo "----------------------"
 hwclock --systohc
-read -t 6
+pause_install
 
 echo "------------------"
 echo "Setting the locale"
 echo "------------------"
 sed -i 's/^#en_GB.UTF-8 UTF-8/en_GB.UTF-8 UTF-8/' /etc/locale.gen
 sed -i 's/^#pt_BR.UTF-8 UTF-8/pt_BR.UTF-8 UTF-8/' /etc/locale.gen
-read -t 6
+pause_install
 
 locale-gen
-read -t 6
+pause_install
 
 echo "LANG=en_GB.UTF-8" > /etc/locale.conf
 echo "KEYMAP=uk" > /etc/vconsole.conf
-read -t 6
+pause_install
 
 echo "--------"
 echo "Hostname"
@@ -130,7 +151,7 @@ echo "$HOST" > /etc/hostname
 cat > /etc/hosts <<HOSTS
 127.0.0.1 localhost
 ::1 localhost
-127.0.1.1 "$HOST".localdomain "$HOST"
+127.0.1.1 $HOST.localdomain $HOST
 HOSTS
 
 
@@ -145,26 +166,25 @@ echo "-------------"
 echo "Root password"
 echo "-------------"
 echo root:$ROOT_PASSWORD | chpasswd
-read -t 6
+pause_install
 
 echo "------------------------------------------"
 echo "Adding the normal user with sudo abilities"
 echo "------------------------------------------"
 useradd -m -G wheel,storage,power,audio -s /bin/bash $USERNAME
 echo $USERNAME:$USER_PASSWORD | chpasswd
-read -t 6
+pause_install
 
 echo "---------------------------"
 echo "Enable sudo for wheel users"
 echo "---------------------------"
 sed -i 's/^# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /etc/sudoers
-read -t 6
+pause_install
 
 echo "----------"
 echo "Bootloader"
 echo "----------"
 bootctl install
-ROOT_UUID=$(blkid -s UUID -o value $ROOT)
 
 cat > /boot/loader/loader.conf <<LOADER
 
@@ -184,19 +204,40 @@ options root=UUID=$ROOT_UUID rootflags=subvol=@ rw
 ENTRY
 
 echo "--------------------------------------"
-echo "Enable Network Manager amd set-up Wifi"
+echo "Enable Network Manager and set-up Wifi"
 echo "--------------------------------------"
 systemctl enable NetworkManager
-systemctl start NetworkManager.service
-read -t 20
+
 if [[ $WIFI_OPT == '1' ]]
 then
-  nmcli device wifi
-  nmcli device wifi connect "$SSID" password "$WIFI_PASS"
+  CONN_UUID=\$(cat /proc/sys/kernel/random/uuid)
+  mkdir -p /etc/NetworkManager/system-connections
+  cat > "/etc/NetworkManager/system-connections/$SSID.nmconnection" <<EOF
+[connection]
+id=$SSID
+uuid=\$CONN_UUID
+type=wifi
+
+[wifi]
+mode=infrastructure
+ssid=$SSID
+
+[wifi-security]
+auth-alg=open
+key-mgmt=wpa-psk
+psk=$WIFI_PASS
+
+[ipv4]
+method=auto
+
+[ipv6]
+method=auto
+EOF
+  chmod 600 "/etc/NetworkManager/system-connections/$SSID.nmconnection"
 else
   echo "No Wifi to set-up"
 fi
-read -t 6
+pause_install
 
 CHROOT
 
