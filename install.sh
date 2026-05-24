@@ -3,7 +3,7 @@
 echo "----------------"
 echo "Input parameters"
 echo "----------------"
-echo "Enter the patch to the EFI partition: "
+echo "Enter the path to the EFI partition: "
 read EFI
 echo "Enter the path to the ROOT partition: "
 read ROOT
